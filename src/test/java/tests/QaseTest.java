@@ -3,12 +3,14 @@ package tests;
 import adapters.BaseAdapter;
 import adapters.ProjectsAdapter;
 import adapters.SuiteAdapter;
+import com.google.gson.Gson;
 import objects.Project;
+import objects.ProjectCreated;
+import objects.SuiteCreated;
 import objects.TestSuite;
 import org.testng.Assert;
 import org.testng.annotations.Test;
-
-import java.util.Random;
+import utils.RandomValueGenerator;
 
 public class QaseTest {
 
@@ -20,9 +22,7 @@ public class QaseTest {
 
     @Test
     public void createProjectTest() {
-        Random r = new Random();
-        char c = (char)(r.nextInt(26) + 'A');
-        String projectCode = "QAOK" + c;
+        String projectCode = "QAOK" + RandomValueGenerator.getRandomChar();
         Project project = Project.builder()
                 .title("QA05_" + projectCode)
                 .code(projectCode)
@@ -30,8 +30,9 @@ public class QaseTest {
                 .access("all")
                 .group(null)
                 .build();
-        String createdProjectCode = new ProjectsAdapter().create(project);
-        Assert.assertEquals(createdProjectCode, projectCode);
+        String body = new ProjectsAdapter().create(project);
+        ProjectCreated createdProject = new Gson().fromJson(body, ProjectCreated.class);
+        Assert.assertEquals(createdProject.getResult().getCode(), projectCode);
     }
 
     @Test
@@ -42,8 +43,9 @@ public class QaseTest {
                 .description("Suite description")
                 .preconditions("Preconditions")
                 .build();
-        boolean createdTestSuiteStatus = new SuiteAdapter().createStatus("QAOK", testSuite);
-        Assert.assertTrue(createdTestSuiteStatus);
+        String body = new SuiteAdapter().create("QAOK", testSuite);
+        SuiteCreated createdSuite = new Gson().fromJson(body, SuiteCreated.class);
+        Assert.assertTrue(createdSuite.isStatus());
     }
 
     @Test
@@ -54,8 +56,9 @@ public class QaseTest {
                 .description("Suite description 2")
                 .preconditions("Preconditions")
                 .build();
-        int createdTestSuiteId = new SuiteAdapter().createId("QAOK", testSuite);
-        boolean actualDeletedSuiteStatus = new SuiteAdapter().delete("QAOK", createdTestSuiteId);
+        String body = new SuiteAdapter().create("QAOK", testSuite);
+        SuiteCreated createdSuite = new Gson().fromJson(body, SuiteCreated.class);
+        boolean actualDeletedSuiteStatus = new SuiteAdapter().delete("QAOK", createdSuite.getResult().getId());
         Assert.assertTrue(actualDeletedSuiteStatus);
     }
 }
